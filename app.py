@@ -9,7 +9,15 @@ import cv2
 model = tf.keras.models.load_model('mnist_model.h5')
 
 # Streamlitアプリのタイトルを設定
-st.title('手書き数字認識アプリ')
+st.title('数字の画像認識')
+
+# 説明文
+st.write("""
+    このアプリでは、手書きで描いた数字を認識します。
+    描画エリアに数字を描き、左下の保存ボタンを押下し、認識するボタンを押してください。
+    （端末に画像が保存されることはありません。）
+""")
+
 
 # Canvasを表示
 canvas_result = st_canvas(
@@ -18,8 +26,8 @@ canvas_result = st_canvas(
     stroke_color="black",  # 描画時の線の色を設定
     background_color="#eee",  # Canvasの周りの背景色を設定
     update_streamlit=True,
-    height=150,
-    width=150,
+    height=300,
+    width=300,
     drawing_mode="freedraw",
     key="canvas",
 )
