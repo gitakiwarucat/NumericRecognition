@@ -1,28 +1,52 @@
 import streamlit as st
+from streamlit_drawable_canvas import st_canvas
 import tensorflow as tf
-from tensorflow.keras.models import load_model
 import numpy as np
-from PIL import Image
+from PIL import Image  # Imageクラスを追加
+import cv2
 
-# モデルの読み込み
-model = load_model('mnist_model.h5')
+# MNISTデータセットで訓練されたニューラルネットワークモデルをロード
+model = tf.keras.models.load_model('mnist_model.h5')
 
+# Streamlitアプリのタイトルを設定
 st.title('手書き数字認識アプリ')
-st.write('0から9までの手書き数字を認識するアプリです。')
 
-# 記載をする場所
-canvas = st.image(np.zeros((150, 150)), caption='手書き数字を描いてください.', use_column_width=True, channels='L')
+# Canvasを表示
+canvas_result = st_canvas(
+    fill_color="rgb(255, 255, 255)",  # Canvasの背景色を白に設定
+    stroke_width=10,  # 描画時の線の太さを設定
+    stroke_color="black",  # 描画時の線の色を設定
+    background_color="#eee",  # Canvasの周りの背景色を設定
+    update_streamlit=True,
+    height=150,
+    width=150,
+    drawing_mode="freedraw",
+    key="canvas",
+)
+
+# 手書き数字の認識処理を行う関数
+def recognize_digit(image):
+    # 画像をモデルに渡して予測を行う
+    prediction = model.predict(image)
+    # 予測結果からクラスを取得
+    predicted_class = np.argmax(prediction)
+    return predicted_class
 
 # 「認識する」ボタンが押されたときの処理
 if st.button('認識する'):
     # Canvas上の画像を読み込んでリサイズ
-    img = canvas.image_data.astype(np.uint8)
-    img = Image.fromarray(img).resize((28, 28)).convert('L')
-    img_array = np.array(img).reshape(1, 28, 28, 1) / 255.0
+    img_array = canvas_result.image_data.astype(np.uint8)
+    img = Image.fromarray(img_array)
 
-    # モデルで予測を実行
-    prediction = model.predict(img_array)
-    predicted_class = np.argmax(prediction)
+    # 28x28にリサイズ
+    resized_image = img.resize((28, 28))
 
-    # 予測結果を表示
-    st.write(f'予測結果: {predicted_class}')
+    # リサイズした画像をNumPy配列に変換
+    img_gray = cv2.cvtColor(np.array(resized_image), cv2.COLOR_BGR2GRAY)
+    img_gray = img_gray.reshape(1, 28, 28, 1) / 255.0  # 正規化と形状変更
+
+    # 画像をモデルに渡して認識処理を行う
+    predicted_class = recognize_digit(img_gray)
+
+    # 認識結果を表示
+    st.write(f'認識結果: {predicted_class}')
